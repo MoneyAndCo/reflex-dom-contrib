@@ -196,6 +196,8 @@ deriving instance TriggerEvent t m => TriggerEvent t (RouteT t m)
 instance PostBuild t m => PostBuild t (RouteT t m) where
   getPostBuild = lift getPostBuild
 
+instance HasDocument m => HasDocument (RouteT t m)
+
 ------------------------------------------------------------------------------
 -- | Minimal functionality necessary for the core routing interface that gives
 -- you access to the contents of the location bar, lets you set its value, and
