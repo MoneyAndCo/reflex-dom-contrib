@@ -364,8 +364,8 @@ htmlDropdown items f payload cfg = do
         dynItems = M.map f <$> m
         findIt ps a = maybe 0 fst $ headMay (filter (\ (_,x) -> payload x == a) ps)
         setVal = attachPromptlyDynWith findIt pairs $ _widgetConfig_setValue cfg
-    d <- dropdown 0 dynItems $
-           DropdownConfig setVal (_widgetConfig_attributes cfg)
+    d <- dropdown $
+           DropdownConfig 0 dynItems setVal (_widgetConfig_attributes cfg)
     let val = zipDynWith (\k x -> payload $ fromJust $ M.lookup k x) (_dropdown_value d) m
     return $ Widget0 val (tagPromptlyDyn val $ _dropdown_change d)
 
@@ -395,8 +395,13 @@ htmlDropdownStatic items f payload cfg = do
         dynItems = M.map f m
     let findIt a = maybe 0 fst $ headMay (filter (\ (_,x) -> payload x == a) pairs)
     let setVal = findIt <$> _widgetConfig_setValue cfg
-    d <- dropdown (findIt $ _widgetConfig_initialValue cfg) (constDyn dynItems) $
-           DropdownConfig setVal (_widgetConfig_attributes cfg)
+    d <-
+      dropdown $
+      DropdownConfig
+        (findIt $ _widgetConfig_initialValue cfg)
+        (constDyn dynItems)
+        setVal
+        (_widgetConfig_attributes cfg)
     let val = (\k -> payload $ fromJust $ M.lookup k m) <$> _dropdown_value d
     return $ Widget0 val (tagPromptlyDyn val $ _dropdown_change d)
 
@@ -498,6 +503,12 @@ listDropdown :: (MonadWidget t m)
 listDropdown xs f attrs defS = do
   let m = M.fromList . zip [(1::Int)..] <$> xs
       opts = (M.insert 0 defS) . M.map f <$> m
-  sel <- liftM _dropdown_value $ dropdown 0 opts $ def & attributes .~ attrs
+      Just config =
+        buildDefault $
+        def &
+        dropdownConfig_initialValue ?~ 0 &
+        dropdownConfig_options ?~ opts &
+        dropdownConfig_attributes ?~ attrs
+  sel <- liftM _dropdown_value $ dropdown config
   return $ zipDynWith M.lookup sel m
 
