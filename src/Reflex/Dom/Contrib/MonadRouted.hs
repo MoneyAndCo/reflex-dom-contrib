@@ -304,7 +304,9 @@ constructReq (LocationInfo u _ _ st) p =
                  then uriFragment u
                  else uriFragment fullUri'
 
-  in  u { uriPath     = encodeUtf8 (T.takeWhile (/= '?') fullPath)
+      notQueryOrFrag x = x /= '?' && x /= '#'
+
+  in  u { uriPath     = encodeUtf8 (T.takeWhile notQueryOrFrag fullPath)
         , uriQuery    = query'
         , uriFragment = frag'
         }
